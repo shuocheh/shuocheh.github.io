@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="题型归纳 credit to: @wh0ami  Longest Increasing Subsequence 给一个无序的整型数组，求最长上升子序列的长度 Input: [10,9,2,5,3,7,101,18]Output: 4Explanation: The longest increasing subsequence is [2,3,7,101], therefore the lengt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="动态规划问题(1)-最长上升子序列及其变种">
+<meta property="og:url" content="http://yoursite.com/2020/07/06/dp-pattern-1-LIS/index.html">
+<meta property="og:site_name" content="S.H&#39;s blog">
+<meta property="og:description" content="题型归纳 credit to: @wh0ami  Longest Increasing Subsequence 给一个无序的整型数组，求最长上升子序列的长度 Input: [10,9,2,5,3,7,101,18]Output: 4Explanation: The longest increasing subsequence is [2,3,7,101], therefore the lengt">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-07-07T04:53:08.000Z">
+<meta property="article:modified_time" content="2020-07-07T06:20:18.523Z">
+<meta property="article:author" content="Shuo H">
+<meta property="article:tag" content="动态规划">
+<meta property="article:tag" content="DP">
+<meta property="article:tag" content="算法">
+<meta property="article:tag" content="Leetcode">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/06/dp-pattern-1-LIS/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>动态规划问题(1)-最长上升子序列及其变种 | S.H's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">S.H's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/06/dp-pattern-1-LIS/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Shuo H">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="S.H's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          动态规划问题(1)-最长上升子序列及其变种
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-07-06 21:53:08 / Modified: 23:20:18" itemprop="dateCreated datePublished" datetime="2020-07-06T21:53:08-07:00">2020-07-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>题型归纳 credit to: <a href="https://leetcode.com/discuss/general-discussion/662866/dp-for-beginners-problems-patterns-sample-solutions" target="_blank" rel="noopener">@wh0ami</a></p>
+</blockquote>
+<h4 id="Longest-Increasing-Subsequence"><a href="#Longest-Increasing-Subsequence" class="headerlink" title="Longest Increasing Subsequence"></a><a href="https://leetcode.com/problems/longest-increasing-subsequence/" target="_blank" rel="noopener">Longest Increasing Subsequence</a></h4><blockquote>
+<p>给一个无序的整型数组，求最长上升子序列的长度</p>
+<p>Input: [10,9,2,5,3,7,101,18]<br>Output: 4<br>Explanation: The longest increasing subsequence is [2,3,7,101], therefore the length is 4. </p>
+</blockquote>
+<a id="more"></a>
+
+<ul>
+<li><strong>暴力解</strong></li>
+</ul>
+<ol>
+<li>递归函数使用三个参数,数组本身, 上一个元素, 当前坐标</li>
+<li>递归的结束条件为当前坐标到达了数组的末尾</li>
+<li>在每次递归中我们考虑两种情况<ol>
+<li>当前元素大于包含在LIS里的上一个元素, 所以我们也把当前元素加入当前LIS</li>
+<li>当前元素小于包含在LIS里的上一个元素,所以我们不能把当前元素加入当前LIS</li>
+</ol>
+</li>
+<li>比较3中的两种情况,返回较大的</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">lengthOfLIS</span><span class="params">(<span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> lengthofLIS(nums, Integer.MIN_VALUE, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">lengthofLIS</span><span class="params">(<span class="keyword">int</span>[] nums, <span class="keyword">int</span> prev, <span class="keyword">int</span> curpos)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (curpos == nums.length) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">int</span> taken = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (nums[curpos] &gt; prev) &#123;</span><br><span class="line">        taken = <span class="number">1</span> + lengthofLIS(nums, nums[curpos], curpos + <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">int</span> nottaken = lengthofLIS(nums, prev, curpos + <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">return</span> Math.max(taken, nottaken);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度: O(2<sup>n</sup>) 递归树的size<br>空间复杂度: O(n<sup>2</sup>) </p>
+<ul>
+<li><strong>优化暴力解</strong></li>
+</ul>
+<p>暴力解中的最大问题是我们对同样的参数调用了多次递归函数, 假如我们把递归函数的结果存储在下来,就能让效率大大提高</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">lengthOfLIS</span><span class="params">(<span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">     <span class="keyword">int</span> memo[][] = <span class="keyword">new</span> <span class="keyword">int</span>[nums.length + <span class="number">1</span>][nums.length];</span><br><span class="line">     <span class="keyword">for</span> (<span class="keyword">int</span>[] l : memo) &#123;</span><br><span class="line">         Arrays.fill(l, -<span class="number">1</span>);</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span> lengthofLIS(nums, -<span class="number">1</span>, <span class="number">0</span>, memo);</span><br><span class="line"> &#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">lengthofLIS</span><span class="params">(<span class="keyword">int</span>[] nums, <span class="keyword">int</span> previndex, <span class="keyword">int</span> curpos, <span class="keyword">int</span>[][] memo)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (curpos == nums.length) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (memo[previndex + <span class="number">1</span>][curpos] &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> memo[previndex + <span class="number">1</span>][curpos];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">int</span> taken = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (previndex &lt; <span class="number">0</span> || nums[curpos] &gt; nums[previndex]) &#123;</span><br><span class="line">        taken = <span class="number">1</span> + lengthofLIS(nums, curpos, curpos + <span class="number">1</span>, memo);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">int</span> nottaken = lengthofLIS(nums, previndex, curpos + <span class="number">1</span>, memo);</span><br><span class="line">    memo[previndex + <span class="number">1</span>][curpos] = Math.max(taken, nottaken);</span><br><span class="line">    <span class="keyword">return</span> memo[previndex + <span class="number">1</span>][curpos];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度: O(n<sup>2</sup>) 递归树的size<br>空间复杂度: O(n<sup>2</sup>) </p>
+<ul>
+<li><strong>动态规划解</strong></li>
+</ul>
+<p>从前两种方法中我们可以看出真正影响结果的其实并不是具体的每个LIS的内容, 我们关心的只有<code>1)当前LIS的结尾元素</code>和<code>2)当前LIS的长度</code>.<br>可以归纳出递归函数:<br><code>dp[i]: 以第i个元素结尾的最长LIS的长度</code><br><code>dp[i]=max(dp[j])+1,∀0≤j&lt;i</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">lengthOfLIS</span><span class="params">(<span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(nums == <span class="keyword">null</span> || nums.length == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span>[] dp = <span class="keyword">new</span> <span class="keyword">int</span>[nums.length];</span><br><span class="line">    Arrays.fill(dp, <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">int</span> res = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; nums.length; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; i; j++) &#123;</span><br><span class="line">            <span class="keyword">if</span>(nums[i] &gt; nums[j]) dp[i] = Math.max(dp[i], dp[j] + <span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        res = Math.max(res, dp[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度: O(n<sup>2</sup>) 两层循环<br>空间复杂度: O(n) dp数组长度</p>
+<ul>
+<li><strong>贪心+二分搜索</strong></li>
+</ul>
+<p>这里有点跑题, 其实我觉得这并不算动态规划,更像一个贪心算法.<br>基本思路是如果我们要让最长上升子序列尽可能的长, 我们需要让序列的上升速度尽可能慢. 如果希望序列的上升速度尽可能慢,很自然的就能想到每次在上升子序列最后加上的那个数字应该尽可能小.</p>
+<ol>
+<li>建立一个数组<code>dp[i]: 长度为i的最长上升子序列的末位元素的最小值</code>, 并且用<code>len</code>来记录当前的最长上升子序列长度</li>
+<li>循环遍历数组中的所有元素</li>
+<li>利用Java自带的<code>Arrays.binarySearch</code>来要么找到<code>1)当前元素在dp中的下标</code>要么找到<code>2)如果当前元素应该被插入数组它应该被插入的位置</code></li>
+<li>假如3中的函数返回了负值我们通过<code>i = -(i + 1)</code>求得3中的<code>2)</code></li>
+<li>更新数组, 如果<code>i</code>的坐标超过了当前最大坐标则<code>len</code>自增</li>
+</ol>
+<p>以输入序列 <code>[0,8,4,12,2]</code> 为例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">0</span><br><span class="line">0 8</span><br><span class="line">0 4</span><br><span class="line">0 4 12</span><br><span class="line">0 2 12</span><br></pre></td></tr></table></figure>
+<p>得到结果为<code>3</code>. 尽管数组中并不存在<code>0 2 12</code>这种子序列,但是这并不会影响结果, 因为我们只关心可能的最大结果</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">lengthOfLIS</span><span class="params">(<span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">int</span>[] dp = <span class="keyword">new</span> <span class="keyword">int</span>[nums.length];</span><br><span class="line">   <span class="keyword">int</span> len = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">for</span>(<span class="keyword">int</span> x : nums) &#123;</span><br><span class="line">       <span class="keyword">int</span> i = Arrays.binarySearch(dp, <span class="number">0</span>, len, x);</span><br><span class="line">       <span class="keyword">if</span>(i &lt; <span class="number">0</span>) i = -(i + <span class="number">1</span>);</span><br><span class="line">       dp[i] = x;</span><br><span class="line">       <span class="keyword">if</span>(i == len) len++;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">return</span> len;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度: O(nlog(n))<br>空间复杂度: O(n)</p>
+<h4 id="Largest-Divisible-Subset"><a href="#Largest-Divisible-Subset" class="headerlink" title="Largest Divisible Subset"></a><a href="https://leetcode.com/problems/largest-divisible-subset/" target="_blank" rel="noopener">Largest Divisible Subset</a></h4><blockquote>
+<p>给一个数组,求最大的可以任意两个元素取余都为0的子集</p>
+<p>Input: [1,2,4,8]<br>Output: [1,2,4,8]</p>
+</blockquote>
+<p>这道题的本质和前面的LIS问题一模一样. 不难看出只要数组是升序的, 对于一个子集, 只要新的元素对子集中最大的元素取余为0, 那么新元素就必定对子集中所有元素取余都为0.</p>
+<p><code>dp[i]: 以第i个元素作为最大元素的子集的大小</code><br><code>dp[i]=max(dp[j])+1,∀0≤j&lt;i</code><br>由于题目要求返回子集本身,我们维护一个单独的变量<code>index</code>来记录最大子集的结尾数字的坐标, 同时维护一个数组<code>pre</code>, 用<code>pre[index]</code>来记录当前数字坐标在子集里前一个数字的坐标</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> List&lt;Integer&gt; <span class="title">largestDivisibleSubset</span><span class="params">(<span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(nums == <span class="keyword">null</span> || nums.length == <span class="number">0</span>) <span class="keyword">return</span> <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">  <span class="keyword">int</span> curMax = <span class="number">0</span>, index = -<span class="number">1</span>;</span><br><span class="line">  Arrays.sort(nums);</span><br><span class="line">  <span class="keyword">int</span>[] dp = <span class="keyword">new</span> <span class="keyword">int</span>[nums.length];</span><br><span class="line">  <span class="keyword">int</span>[] pre = <span class="keyword">new</span> <span class="keyword">int</span>[nums.length];</span><br><span class="line">  <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; nums.length; i++) &#123;</span><br><span class="line">      dp[i] = <span class="number">1</span>;</span><br><span class="line">      pre[i] = -<span class="number">1</span>;</span><br><span class="line">      <span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; i; j++) &#123;</span><br><span class="line">          <span class="keyword">if</span>(nums[i] % nums[j] == <span class="number">0</span> &amp;&amp; dp[i] &lt; dp[j] + <span class="number">1</span>) &#123;</span><br><span class="line">              dp[i] = dp[j] + <span class="number">1</span>;</span><br><span class="line">              pre[i] = j;</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span>(dp[i] &gt; curMax) &#123;</span><br><span class="line">          curMax = dp[i];</span><br><span class="line">          index = i;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  List&lt;Integer&gt; res = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">  <span class="keyword">while</span>(index != -<span class="number">1</span>) &#123;</span><br><span class="line">      res.add(nums[index]);</span><br><span class="line">      index = pre[index];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度: O(n<sup>2</sup>) 两层循环<br>空间复杂度: O(n) dp数组长度</p>
+<h4 id="Russian-Doll-Envelopes"><a href="#Russian-Doll-Envelopes" class="headerlink" title="Russian Doll Envelopes"></a><a href="https://leetcode.com/problems/russian-doll-envelopes/" target="_blank" rel="noopener">Russian Doll Envelopes</a></h4><blockquote>
+<p>非常经典的一道题: 俄罗斯套娃信封<br>用(w,h)来表示一个信封的场合款. 一个信封能且只能在长宽都严格小于另一个信封的时候被套入另一个信封<br>求最多可以有多少的信封组成俄罗斯套娃</p>
+<p>Input: [[5,4],[6,4],[6,7],[2,3]]<br>Output: 3<br>Explanation: The maximum number of envelopes you can Russian doll is 3 ([2,3] =&gt; [5,4] =&gt; [6,7]).</p>
+</blockquote>
+<p>这道题也是很典型的LIS问题, 很容易可以想到用升序排序之后直接进行LIS. 但是这样带来的问题是同样宽度的信封可能在结果中有多个. 可以首先按照宽度递增, 高度递减的方式排序, 之后对高度进行LIS.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">宽度升序 高度也升序</span><br><span class="line">[2,3] [5,4] [6,5] [6,7]</span><br><span class="line">对高度进行LIS会得到 4</span><br><span class="line"></span><br><span class="line">如果我们对宽度升序 对高度降序</span><br><span class="line">[2,3] [5,4] [6,7] [6,5]</span><br><span class="line">对高度进行LIS会得到 3</span><br></pre></td></tr></table></figure>
+<p>这样就可以避免同一宽度下不符合条件的高度被计算多次</p>
+<p>这里是LIS的解法4, 为了避免面试不允许直接用自带的<code>Arrays.binarySearch</code>手写了一下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">maxEnvelopes</span><span class="params">(<span class="keyword">int</span>[][] envelopes)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(envelopes == <span class="keyword">null</span> || envelopes.length == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    Arrays.sort(envelopes, (a, b) -&gt; a[<span class="number">0</span>] != b[<span class="number">0</span>] ? a[<span class="number">0</span>] - b[<span class="number">0</span>] : b[<span class="number">1</span>] - a[<span class="number">1</span>]);</span><br><span class="line">    <span class="keyword">int</span>[] dp = <span class="keyword">new</span> <span class="keyword">int</span>[envelopes.length];</span><br><span class="line">    <span class="keyword">int</span> len = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span>[] envelope : envelopes) &#123;</span><br><span class="line">        <span class="keyword">int</span> idx = binarySearch(dp, <span class="number">0</span>, len, envelope[<span class="number">1</span>]); <span class="comment">// 当前高度可以插入哪里</span></span><br><span class="line">        dp[idx] = envelope[<span class="number">1</span>]; <span class="comment">// 更新高度</span></span><br><span class="line">        <span class="keyword">if</span>(idx == len) len++; <span class="comment">// 如果比之前的长度长了就更新长度</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> len;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">binarySearch</span><span class="params">(<span class="keyword">int</span>[] dp, <span class="keyword">int</span> l, <span class="keyword">int</span> r, <span class="keyword">int</span> target)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(l &lt; r) &#123;</span><br><span class="line">        <span class="keyword">int</span> mid = l + ((r - l) &gt;&gt; <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">if</span>(dp[mid] &gt;= target) &#123;</span><br><span class="line">            r = mid;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            l = mid + <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> l;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度: O(nlog(n))<br>空间复杂度: O(n)</p>
+<h4 id="Maximum-Length-of-Pair-Chain"><a href="#Maximum-Length-of-Pair-Chain" class="headerlink" title="Maximum Length of Pair Chain"></a><a href="https://leetcode.com/problems/maximum-length-of-pair-chain/" target="_blank" rel="noopener">Maximum Length of Pair Chain</a></h4><blockquote>
+<p>给n个数对<br>定义假如 b&lt;c 则(c, d)可以连上(a, b)<br>求最长的数对链长度</p>
+<p>Input: [[1,2], [2,3], [3,4]]<br>Output: 2<br>Explanation: The longest chain is [1,2] -&gt; [3,4]</p>
+</blockquote>
+<p>纯换皮LIS, 唯一区别就是对原数组进行排序. 这里采用LIS的方法3</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">findLongestChain</span><span class="params">(<span class="keyword">int</span>[][] pairs)</span> </span>&#123;</span><br><span class="line">     Arrays.sort(pairs, <span class="keyword">new</span> Comparator&lt;<span class="keyword">int</span>[]&gt;() &#123;</span><br><span class="line">         <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(<span class="keyword">int</span>[] a, <span class="keyword">int</span>[] b)</span> </span>&#123;</span><br><span class="line">             <span class="keyword">return</span> a[<span class="number">0</span>] == b[<span class="number">0</span>] ? a[<span class="number">1</span>] - b[<span class="number">1</span>] : a[<span class="number">0</span>] - b[<span class="number">0</span>];</span><br><span class="line">         &#125;</span><br><span class="line">     &#125;);</span><br><span class="line">     <span class="keyword">int</span>[] dp = <span class="keyword">new</span> <span class="keyword">int</span>[pairs.length];</span><br><span class="line">     <span class="keyword">int</span> len = <span class="number">0</span>;</span><br><span class="line">     <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; pairs.length; i++) &#123;</span><br><span class="line">         dp[i] = <span class="number">1</span>;</span><br><span class="line">         <span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; i; j++) &#123;</span><br><span class="line">             <span class="keyword">if</span>(pairs[j][<span class="number">1</span>] &lt; pairs[i][<span class="number">0</span>] &amp;&amp; dp[j] + <span class="number">1</span> &gt; dp[i]) &#123;</span><br><span class="line">                 dp[i] = dp[j] + <span class="number">1</span>;</span><br><span class="line">             &#125;</span><br><span class="line">         &#125;</span><br><span class="line">         len = Math.max(len, dp[i]);</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span> len;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度: O(n<sup>2</sup>) 两层循环<br>空间复杂度: O(n) dp数组长度</p>
+<h4 id="Number-of-Longest-Increasing-Subsequence"><a href="#Number-of-Longest-Increasing-Subsequence" class="headerlink" title="Number of Longest Increasing Subsequence"></a><a href="https://leetcode.com/problems/number-of-longest-increasing-subsequence/" target="_blank" rel="noopener">Number of Longest Increasing Subsequence</a></h4><blockquote>
+<p>给一个无序的整型数组，求最长上升子序列的数量</p>
+<p>Input: [1,3,5,4,7]<br>Output: 2<br>Explanation: The two longest increasing subsequence are [1, 3, 4, 7] and [1, 3, 5, 7].</p>
+</blockquote>
+<p>这次不仅要求LIS的长度还要求LIS的数量. 维护第二个数组<code>count</code>来记录当前坐标的LIS的数量.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">findNumberOfLIS</span><span class="params">(<span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> len = <span class="number">0</span>, maxCount = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span>[] dp = <span class="keyword">new</span> <span class="keyword">int</span>[nums.length];</span><br><span class="line">        <span class="keyword">int</span>[] count = <span class="keyword">new</span> <span class="keyword">int</span>[nums.length];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; nums.length; i++) &#123;</span><br><span class="line">            dp[i] = <span class="number">1</span>;</span><br><span class="line">            count[i] = <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; i; j++) &#123;</span><br><span class="line">                <span class="keyword">if</span>(nums[i] &gt; nums[j]) &#123;</span><br><span class="line">                    <span class="keyword">if</span>(dp[j] + <span class="number">1</span> == dp[i]) &#123;</span><br><span class="line">                        count[i] += count[j];</span><br><span class="line">                    &#125; <span class="keyword">else</span> <span class="keyword">if</span>(dp[j] + <span class="number">1</span> &gt; dp[i]) &#123;</span><br><span class="line">                        dp[i] = dp[j] + <span class="number">1</span>;</span><br><span class="line">                        count[i] = count[j];</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(dp[i] &gt; len) &#123;</span><br><span class="line">                maxCount = count[i];</span><br><span class="line">                len = dp[i];</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span>(dp[i] == len) &#123;</span><br><span class="line">                maxCount += count[i];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> maxCount;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度: O(n<sup>2</sup>) 两层循环<br>空间复杂度: O(n) dp数组长度</p>
+<h4 id="Longest-String-Chain"><a href="#Longest-String-Chain" class="headerlink" title="Longest String Chain"></a><a href="https://leetcode.com/problems/longest-string-chain/" target="_blank" rel="noopener">Longest String Chain</a></h4><blockquote>
+<p>给一个字数串数组<br>如果我们可以在 word1 的任何地方添加一个字母使其变成 word2，那么我们认为 word1 是 word2 的前身<br>词链是单词 [word_1, word_2, …, word_k] 组成的序列<br>求最长词列的长度</p>
+<p>Input: [“a”,”b”,”ba”,”bca”,”bda”,”bdca”]<br>Output: 4<br>Explanation: “a”,”ba”,”bda”,”bdca”</p>
+</blockquote>
+<p>虽然不如之前明显但是依然是LIS的换皮. 区别在于之前是比较数字大小这次是比较字符串长度</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">longestStrChain</span><span class="params">(String[] words)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(words.length == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        Map&lt;String, Integer&gt; dp = <span class="keyword">new</span> HashMap();</span><br><span class="line">        Arrays.sort(words, (a, b)-&gt;a.length() - b.length());</span><br><span class="line">        <span class="keyword">int</span> res = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">for</span>(String str : words) &#123;</span><br><span class="line">            List&lt;String&gt; predecessors = getPredecessor(dp, str);</span><br><span class="line">            <span class="keyword">int</span> count = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">for</span>(String predecessor : predecessors) &#123;</span><br><span class="line">                count = Math.max(dp.get(predecessor), count);</span><br><span class="line">            &#125;</span><br><span class="line">            dp.put(str, count + <span class="number">1</span>);</span><br><span class="line">            res = Math.max(res, count + <span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 找到当前字符串的所有前身</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> List&lt;String&gt; <span class="title">getPredecessor</span><span class="params">(Map&lt;String, Integer&gt; dp, String s)</span> </span>&#123;</span><br><span class="line">        List&lt;String&gt; res = <span class="keyword">new</span> ArrayList();</span><br><span class="line">        <span class="keyword">int</span> len = s.length();</span><br><span class="line">        StringBuilder sb = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; len; i++) &#123;</span><br><span class="line">            sb.setLength(<span class="number">0</span>);</span><br><span class="line">            <span class="keyword">if</span>(i &gt; <span class="number">0</span>) sb.append(s.substring(<span class="number">0</span>, i));</span><br><span class="line">            <span class="keyword">if</span>(i &lt; len - <span class="number">1</span>) sb.append(s.substring(i+<span class="number">1</span>, len));</span><br><span class="line">            <span class="keyword">if</span>(dp.containsKey(sb.toString())) res.add(sb.toString());</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度: O(n<sup>2</sup>)<br>空间复杂度: O(n)</p>
+<h4 id="如何思考DP问题"><a href="#如何思考DP问题" class="headerlink" title="如何思考DP问题"></a>如何思考DP问题</h4><ol>
+<li>思考出一个可能为解的递归关系</li>
+<li>当已经有了一个可能的递归关系时,把递归关系拆分为general case和base case<ol>
+<li>在讨论general case时,给dp的递归关系赋予一个具体的含义,比如针对最长上升子序列问题就是<code>dp[i]: 对于以下标i结尾的最长上升子序列长度</code></li>
+<li>在定义了递推关系函数之后,用dp函数表示原题的返回值. 如果没法表示,就说明递推关系中很可能缺少了某些必要信息</li>
+<li>在top-down(memorization)的题解中base case往往都很简单直接, 因为这就是递归结束的条件</li>
+</ol>
+</li>
+<li>DP问题的本质其实是图问题. 每个<code>dp[...][...][...]</code>其实都可以通过递归关系表示为节点和边的关系. 一个问题如果有DP解法, 那么这个图一定是一个有向无环图. 这常常也是书上说的<code>optimal substructure</code>. 正如费曼所说, 每当在公式中看到π的时候, 就会问: “圆在哪里?” 思考清楚DP问题中的图问题可以帮助我们更深层得理解每种DP问题类型的本质.</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92/" rel="tag"># 动态规划</a>
+              <a href="/tags/DP/" rel="tag"># DP</a>
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+              <a href="/tags/Leetcode/" rel="tag"># Leetcode</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/04/contest-196/" rel="prev" title="Leetcode Contest 196">
+      <i class="fa fa-chevron-left"></i> Leetcode Contest 196
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/06/graph-pattern-1-union-find/" rel="next" title="图问题(1)-并查集">
+      图问题(1)-并查集 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Longest-Increasing-Subsequence"><span class="nav-number">1.</span> <span class="nav-text">Longest Increasing Subsequence</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Largest-Divisible-Subset"><span class="nav-number">2.</span> <span class="nav-text">Largest Divisible Subset</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Russian-Doll-Envelopes"><span class="nav-number">3.</span> <span class="nav-text">Russian Doll Envelopes</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Maximum-Length-of-Pair-Chain"><span class="nav-number">4.</span> <span class="nav-text">Maximum Length of Pair Chain</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Number-of-Longest-Increasing-Subsequence"><span class="nav-number">5.</span> <span class="nav-text">Number of Longest Increasing Subsequence</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Longest-String-Chain"><span class="nav-number">6.</span> <span class="nav-text">Longest String Chain</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何思考DP问题"><span class="nav-number">7.</span> <span class="nav-text">如何思考DP问题</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Shuo H</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Shuo H</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
