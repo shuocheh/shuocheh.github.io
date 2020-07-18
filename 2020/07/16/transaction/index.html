@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="原文: Design Data Intensive Applications部分中文翻译来自: 设计数据密集型应用 - 中文翻译 事务ACID的含义事务(transaction)所提供的安全保证, 通常由缩略词ACID来描述.   Atomicity 原子性 Consistency 一致性 Isolation 隔离性 Durability 持久性">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DDIA读书笔记:事务">
+<meta property="og:url" content="http://yoursite.com/2020/07/16/transaction/index.html">
+<meta property="og:site_name" content="S.H&#39;s blog">
+<meta property="og:description" content="原文: Design Data Intensive Applications部分中文翻译来自: 设计数据密集型应用 - 中文翻译 事务ACID的含义事务(transaction)所提供的安全保证, 通常由缩略词ACID来描述.   Atomicity 原子性 Consistency 一致性 Isolation 隔离性 Durability 持久性">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/images/fig7-1.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-2.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-3.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-4.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-5.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-6.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-7.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-8.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-9.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-10.png">
+<meta property="og:image" content="http://yoursite.com/images/fig7-11.png">
+<meta property="article:published_time" content="2020-07-17T04:56:42.000Z">
+<meta property="article:modified_time" content="2020-07-18T01:13:01.195Z">
+<meta property="article:author" content="Shuo H">
+<meta property="article:tag" content="DDIA">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/images/fig7-1.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/16/transaction/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>DDIA读书笔记:事务 | S.H's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">S.H's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/16/transaction/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Shuo H">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="S.H's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DDIA读书笔记:事务
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-07-16 21:56:42" itemprop="dateCreated datePublished" datetime="2020-07-16T21:56:42-07:00">2020-07-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-17 18:13:01" itemprop="dateModified" datetime="2020-07-17T18:13:01-07:00">2020-07-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">系统</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>原文: <a href="https://www.oreilly.com/library/view/designing-data-intensive-applications/9781491903063/" target="_blank" rel="noopener">Design Data Intensive Applications</a><br>部分中文翻译来自: <a href="https://github.com/Vonng/ddia" target="_blank" rel="noopener">设计数据密集型应用 - 中文翻译</a></p>
+<h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><h3 id="ACID的含义"><a href="#ACID的含义" class="headerlink" title="ACID的含义"></a>ACID的含义</h3><p>事务(<em>transaction</em>)所提供的安全保证, 通常由缩略词ACID来描述. </p>
+<ul>
+<li>Atomicity 原子性</li>
+<li>Consistency 一致性</li>
+<li>Isolation 隔离性</li>
+<li>Durability 持久性</li>
+</ul>
+<a id="more"></a>
+
+<h5 id="Atomicity-原子性"><a href="#Atomicity-原子性" class="headerlink" title="Atomicity 原子性"></a>Atomicity 原子性</h5><p>原子性一般是说在多线程编程中, 一个线程执行一个原子操作, 意味着另一个线程不会看到该操作的任何中间状态. 系统只能处于操作之前或操作之后的状态, 而不是介于两者之间. 然而ACID的原子性并不是兵法中的原子性. 这种性质其实是属于Isolation. </p>
+<p>ACID的原子性描述了当用户进行多次写入操作, 但是在一些写操作处理之后系统出现故障. 例如进程崩溃, 网络中断, 磁盘没有剩余空间等此类情况时, 该事务会由于错误而不能提交, 则该事物被终止, 且数据库必须丢弃或撤销该事务中的所有写入. </p>
+<p>ACID的原子性的定义是: <strong>能够在错误时终止事务, 丢弃该事务进行的所有写入变更的能力</strong></p>
+<h5 id="Consistency-一致性"><a href="#Consistency-一致性" class="headerlink" title="Consistency 一致性"></a>Consistency 一致性</h5><p>ACID一致性的概念是, <strong>对数据的一组特定约束必须始终成立</strong>. 这也叫做<strong>invariants 不变量</strong>. 原子性, 隔离性和持久性都是数据库的属性, 而ACID中的一致性, 是应用程序的属性. 应用可能依赖数据的原子性和隔离属性来实现一致性, 但是这不是由数据库属性来实现的.</p>
+<h5 id="Isolation-隔离性"><a href="#Isolation-隔离性" class="headerlink" title="Isolation 隔离性"></a>Isolation 隔离性</h5><p>大多数数据库会同时被多个客户端访问, 如果他们各自读写不同的数据, 不会出现任何问题. 但是如果他们访问相同的记录, 就会遇到并发问题(race condition). </p>
+<p>假如有两个客户端同时在数据库中进行增加计数器的操作. 每个客户端都需要读取计数器的当前值, 加1, 再写回新值. 在途中由于发生了两次增长, 计数器应该从42增至44, 但由于竞争条件, 只增加到了43.<br><img src="/images/fig7-1.png" alt=""></p>
+<p>ACID中的隔离性意味着, <strong>同时执行的事务是相互隔离的</strong></p>
+<h5 id="Durability-持久性"><a href="#Durability-持久性" class="headerlink" title="Durability 持久性"></a>Durability 持久性</h5><p>数据库的目的之一是, 提供一个安全的地方存储数据而不需要担心丢失. 持久性是一个承诺, 即<strong>一旦事务成功完成, 即使发生硬件故障或数据库崩溃, 写入的任何数据也不会丢失</strong></p>
+<p>在单节点数据库中, 持久性通常意味着数据以及被写入硬盘或SSD. 它通常还包括预写日志(write-ahead log)或其他类似的文件, 以便在磁盘上的数据结构损坏时进行恢复. 在有replication的数据库中, 持久性意味着数据已经成功复制到了一些节点. 为了提供持久性保证, 数据库必须等待这些replication完成之后, 才能报告数据成功提交. </p>
+<p>完美的持久性是不存在的, 毕竟如果所有硬盘和备份都失效了, 数据就永久丢失了.</p>
+<h3 id="单对象和多对象操作"><a href="#单对象和多对象操作" class="headerlink" title="单对象和多对象操作"></a>单对象和多对象操作</h3><p>在ACID中, 原子性和隔离性描述了客户端在同一事务中执行多次写入时:</p>
+<ul>
+<li>原子性: 如果在一系列写操作的中途发生故障, 应终止事务处理并放弃当前事务的所有写入(all-or-nothing guarantee)</li>
+<li>隔离性: 同时运行的事务不应该相互干扰. i.e. 一个事务多次写入, 另一个事务要么看到全部结果要么什么也看不到. </li>
+</ul>
+<p>这些定义假设你想同时修改多个对象(行, 文档, 记录). 通常需要<strong>多对象事务 multi-object transaction</strong>来保持多块数据同步</p>
+<p>假设用下面的语句查询用户未读邮件的数量</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(*)<span class="keyword">FROM</span> emails <span class="keyword">WHERE</span> recipient_id = <span class="number">2</span> <span class="keyword">AND</span> unread_flag = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>当邮件太多时这个查询会很慢, 于是我们用单独的字段来储存未读邮件的数量(denomolization). 当一个新消息写入时, 我们增长未读计数器, 当一个消息被标记为已读时, 减少未读计数器</p>
+<p>在下图中用户2遇到异常情况: 邮件列表里显示有未读消息, 但计数器显示为零未读消息, 因为计数器增长还没有发生. 隔离性可以避免这个问题：通过确保用户2 要么同时看到新邮件和增长后的计数器, 要么都看不到. 反正不会看到执行到一半的中间结果.<br><img src="/images/fig7-2.png" alt=""></p>
+<p>下图说明了对原子性的需求: 如果在事务过程中发生错误, 邮箱和未读计数器的内容可能会失去同步. 在原子事务中, 如果对计数器的更新失败, 事务将被中止, 并且插入的电子邮件将被回滚.<br><img src="/images/fig7-3.png" alt=""></p>
+<p>多对象事务需要某种方式来确定哪些读写操作属于同一个事务. 在关系型数据库中, 通常基于客户端与数据库服务器的TCP连接: 在任何特定连接上, <code>BEGIN TRANSACTION</code> 和<code>COMMIT</code>语句之间的所有内容都被认为是同一事务的一部分</p>
+<h5 id="单对象写入"><a href="#单对象写入" class="headerlink" title="单对象写入"></a>单对象写入</h5><p>当单个对象发生改变时, 原子性和隔离也是适用的. 例如, 假设您正在向数据库写入一个 20 KB的 JSON文档：</p>
+<ul>
+<li>如果在发送第一个10 KB之后网络连接中断, 数据库是否存储了不可解析的10KB JSON片段?</li>
+<li>如果在数据库正在覆盖磁盘上的前一个值的过程中电源发生故障, 是否最终将新旧值拼接在一起?</li>
+<li>如果另一个客户端在写入过程中读取该文档, 是否会看到部分更新的值?</li>
+</ul>
+<p>这些问题很难解决, 所以存储引擎的普遍目标是: 对单节点上的单个对象(例如键值对)上提供原子性和隔离性. 原子性可以通过使用日志来实现崩溃恢复, 并且可以使用每个对象上的锁来实现隔离(每次只允许一个线程访问对象).</p>
+<p>一些数据库也提供更复杂的原子操作, 例如自增. 同样用的很多的是CAS(compare and set), 当值没有被其他并发修改过时, 才允许执行写操作. </p>
+<h5 id="多对象事务的需求"><a href="#多对象事务的需求" class="headerlink" title="多对象事务的需求"></a>多对象事务的需求</h5><p>许多分布式数据存储已经放弃了多对象事务, 因为多对象事务很难跨分区实现, 而且在需要高可用性或高性能的情况下, 它们可能会碍事. </p>
+<p>但是我们是否需要多对象事务?是否有可能只用键值数据模型和单对象操作来实现任何应用程序?<br>有一些场景中, 单对象插入, 更新和删除是足够的. 但是许多其他场景需要协调写入几个不同的对象：</p>
+<ul>
+<li>在关系数据模型中, 一个表中的行通常具有对另一个表中的行的外键引用. (类似的是, 在一个图数据模型中, 一个顶点有着到其他顶点的边). 多对象事务使你确信这些引用始终有效：当插入几个相互引用的记录时, 外键必须是正确的, 最新的, 不然数据就没有意义. </li>
+<li>在文档数据模型中, 需要一起更新的字段通常在同一个文档中, 这被视为单个对象——更新单个文档时不需要多对象事务. 但是, 缺乏连接功能的文档数据库会鼓励非规范化. 当需要更新非规范化的信息时, 需要一次更新多个文档. 事务在这种情况下非常有用, 可以防止非规范化的数据不同步.</li>
+<li>在具有二级索引的数据库中, 每次更改值时都需要更新索引. 因为从事务的角度看, 这些索引是不同的数据库对象. </li>
+</ul>
+<h5 id="处理错误和中止"><a href="#处理错误和中止" class="headerlink" title="处理错误和中止"></a>处理错误和中止</h5><p>ACID的哲学是: 如果数据库有违反原子性, 隔离性或持久性的危险, 宁愿完全放弃事务.<br>不是所有系统都遵循这个哲学, 特别是无主复制的数据存储, 主要是在尽力而为的基础上进行工作(best effort). 在这种系统中, 从错误中恢复是应用的责任.</p>
+<p>为什么有时不应该重试一个中止的事务?</p>
+<ul>
+<li>如果事务实际上成功了但是在服务器确认提交成功时网络故障, 而客户端认为提交失败了, 那么重试事务会导致事务被执行两次</li>
+<li>如果错误是因为负载太大, 重试会加大服务器的负载</li>
+<li>很多情况下重试是没有意义的(永久性错误)</li>
+<li>如果事务在数据库之外也会产生副作用, 那么即使事务被终止, 也可能发生这些副作用(例如发送邮件或者短信)</li>
+</ul>
+<h2 id="Weak-Isolation-Levels-弱隔离级别"><a href="#Weak-Isolation-Levels-弱隔离级别" class="headerlink" title="Weak Isolation Levels 弱隔离级别"></a>Weak Isolation Levels 弱隔离级别</h2><p>如果两个事务不触及相同的数据, 他们可以安全的并行执行, 但是当一个事务读取另一个事务同时修改的数据时, 或者当两个事务同时修改相同的数据时, 并发问题就会出现.  数据库提供事务隔离(transaction Isolation)来隐藏并发问题, 可序列化(serializable)的隔离级别意味着数据库保证事务的效果如同连续运行. </p>
+<p>下面我们讨论几种实践中使用的弱隔离级别, 并讨论哪种竞争条件可能发生也可能不发生</p>
+<h3 id="Read-Committed-读已提交"><a href="#Read-Committed-读已提交" class="headerlink" title="Read Committed 读已提交"></a>Read Committed 读已提交</h3><p>最基本的事务隔离级别是<strong>读已提交(Read Committed)</strong>, 它提供两个保证:</p>
+<ol>
+<li>从数据库读时, 只能看到已提交的数据(no dirty reads)</li>
+<li>写入数据库时, 只会覆盖已经写入的数据( no dirty writes)</li>
+</ol>
+<h5 id="没有脏读"><a href="#没有脏读" class="headerlink" title="没有脏读"></a>没有脏读</h5><p>一个事务已经将一些数据写入数据库, 但是事务还没有提交或者终止. 此时如果另一个事务看到了未提交的数据, 叫做脏读(dirty reads)</p>
+<p>在<strong>读已提交</strong>隔离级别运行的事务必须防止脏读. 这意味着事务的任何写入操作只有在该事务提交时才能被看到. </p>
+<p>在下图中用户1设置了<code>x = 3</code>, 但用户2的<code>get x</code>仍旧返回了2, 因为此时用户1尚未提交.<br><img src="/images/fig7-4.png" alt=""></p>
+<blockquote>
+<p>为什么要防止脏读?<br>如果事务需要更新多个对象, 脏读意味着另一个事务只会看到一部分更新<br>如果事务终止, 所有写操作都需要回滚. 如果数据库允许脏读, 那就意味着一个事务可能会看到稍后会被回滚的数据</p>
+</blockquote>
+<h5 id="没有脏写"><a href="#没有脏写" class="headerlink" title="没有脏写"></a>没有脏写</h5><p>如果两个事务同时尝试更新数据库中的相同对象, 我们不知道写入的顺序是怎样, 但是我们通常认为后面的写入会覆盖前面的写入.<br>但是如果先前的写入是尚未提交的事务的一部分, 又会发生什么情况? 后面的写入会覆盖一个尚未提交的值? 这被称作脏写. 在<strong>读已提交</strong>的隔离级别上运行的事务必须防止脏写, 通常是延迟第二次写入, 直到第一次写入事务提交或中止为止. </p>
+<p>防止脏写可以避免一些并发问题:<br>如果事务更新多个对象, 如下图的二手车交易网站中, Alice和Bob两个人同时试图购买同一辆车. 购买汽车需要两次数据库写入: 网站上的商品列表需要更新, 以反映买家的购买, 销售发票需要发送给买家. 在图中的情况下, 销售是属于Bob的(因为他成功更新了商品列表), 但发票却寄送给了Alice(因为她成功更新了发票表). 读已提交会阻止这样这样的事故.<br><img src="/images/fig7-5.png" alt=""></p>
+<h5 id="读已提交的实现"><a href="#读已提交的实现" class="headerlink" title="读已提交的实现"></a>读已提交的实现</h5><p>使用数据库的<strong>行锁(row-level lock)</strong>来防止脏写: 当事务想要修改一个对象时, 它必须先获得该对象的锁. 然后必须持有该锁到事务提交或者中止. 这种锁定是读已提交(或更强隔离级别)的数据库自动完成的. </p>
+<p>可以使用相同的锁并要求任何想要读取对象的事务获取这个锁, 然后在读取之后立即释放锁. 这能保证不会读取正在事务之中的值. 但是要求读锁的板载在实践中会降低读取性能, 因此大多数数据库会在写操作之前记住旧的纸和当前持有锁的事务设置的新值. 当事务在进行时, 任何其他读取对象的事务都会拿到旧的值, 只有当新值提交后, 事务才会切换到读取新值. </p>
+<h3 id="Snapshot-Isolation-and-Repeatable-Read-快照隔离和可重复读"><a href="#Snapshot-Isolation-and-Repeatable-Read-快照隔离和可重复读" class="headerlink" title="Snapshot Isolation and Repeatable Read 快照隔离和可重复读"></a>Snapshot Isolation and Repeatable Read 快照隔离和可重复读</h3><p>读已提交依然会在某些时候产生并发错误</p>
+<p>Alice在银行有1000美元的储蓄, 分为两个账户, 每个500美元. 现在一笔事务从她的一个账户中转移了100美元到另一个账户. 如果她在事务处理的同时查看其账户余额列表, 不幸地在转账事务完成前看到收款账户余额(余额为500美元), 而在转账完成后看到另一个转出账户(已经转出100美元, 余额400美元). 对Alice来说, 现在她的账户似乎只有900美元——看起来100美元已经消失了.<br><img src="/images/fig7-6.png" alt=""></p>
+<p>这种异常被称为<strong>不可重复读(nonrepeatable read)</strong>或<strong>读取偏差(read skew)</strong>: 如果Alice在事务结束时再次读取账户1的余额, 她将看到与她之前的查询中看到的不同的值(600美元). 在读已提交的隔离条件下, 不可重复读被认为是可接受的: Alice看到的帐户余额时确实在阅读时已经提交了. </p>
+<h5 id="Snapshot-Isolation-快照隔离"><a href="#Snapshot-Isolation-快照隔离" class="headerlink" title="Snapshot Isolation 快照隔离"></a>Snapshot Isolation 快照隔离</h5><p>这是这个问题最常见的解决方案. 每个事务都从数据库的一致快照(consistent snapshot)中读取, 事务可以看到事务开始时在数据库中提交的所有数据. 即使这些数据随后被另一个事务更改, 每个事务也只能看到该特定时间的旧数据. </p>
+<h5 id="快照隔离的实现"><a href="#快照隔离的实现" class="headerlink" title="快照隔离的实现"></a>快照隔离的实现</h5><p>和读已提交类似, 快照隔离用写锁防止脏写, 但是对读取不进行任何锁定. 快照隔离的原则是<strong>读不阻塞写, 写不阻塞读</strong>. 数据库保留一个对象的几个不同的提交版本, 因为正在进行的事务可能需要看到数据库在不同时间点的状态. 因为它并排维护多个版本的对象, 这种技术被称作<strong>多版本并发控制(MVCC, multi-version concurrency control)</strong>. </p>
+<p>下图说明了PostgreSQL中基于MVCC的快照隔离. 当一个事务开始时它被赋予一个唯一的永远增长的事务ID(<code>txid</code>). 每当事务向数据库中写入时, 它写入的数据也会被标记写入的事务id.<br><img src="/images/fig7-7.png" alt=""><br>表中的每一行都有一个<code>created_by</code>字段, 其中包含将该行插入到表中的的事务ID. 此外, 每行都有一个<code>deleted_by</code>字段, 最初是空的. 如果某个事务删除了一行, 那么该行实际上并未从数据库中删除, 而是通过将<code>deleted_by</code>字段设置为请求删除的事务的ID来标记为删除. 在稍后的时间, 当确定没有事务可以再访问已删除的数据时, 数据库中的垃圾收集过程会将所有带有删除标记的行移除, 并释放其空间. </p>
+<p><code>UPDATE</code>操作在内部翻译为 <code>DELETE</code> 和 <code>INSERT</code> . 例如, 在图中, 事务13从账户2中扣除100美元, 将余额从500美元改为400美元. 实际上包含两条账户2的记录: 余额为$500的行被标记为被事务13删除, 余额为$400的行由事务13创建. </p>
+<h5 id="一致性快照的可见性规则"><a href="#一致性快照的可见性规则" class="headerlink" title="一致性快照的可见性规则"></a>一致性快照的可见性规则</h5><p>当一个事务从数据库中读取时, 事务使用事务id来判断什么对象可见什么对象不可见. 通过仔细定义可见规则, 数据库可以向应用程序呈现一致的数据行快照:</p>
+<ol>
+<li>在每次事务开始前, 数据库列出当时所有其他的事务清单, 即使他们只之后提交了, 这些事务的任何写入也会被忽略</li>
+<li>被中止事务所执行的任何写入都将被忽略</li>
+<li>更晚开始的事务id进行的任何写入都被忽略, 无论是否已经提交</li>
+<li>所有其他写入都可见</li>
+</ol>
+<p>也就是说, 如果以下两个条件都成立, 则可见一个对象:</p>
+<ul>
+<li>读事务开始时, 创建该对象的事务已提交</li>
+<li>对象为被标记为删除, 如果被标记为删除, 请求删除的事务在读事务开始时尚未提交</li>
+</ul>
+<h4 id="防止丢失更新"><a href="#防止丢失更新" class="headerlink" title="防止丢失更新"></a>防止丢失更新</h4><p>读已提交和快照隔离主要保证了只读事务在并发写入时可以看到什么, 却没有讨论两个事务并发写入的问题.<br>如果应用从数据库中读取了一些值, 修改并写回修改的值(读取-修改-写入序列), 则可能发生丢失更新的问题. </p>
+<ul>
+<li>增加计数器或更新账户余额</li>
+<li>在复杂值中进行本地修改: e.g.添加元素进入json</li>
+<li>两个用户同时编辑页面, 都通过将整个页面内容发送到服务器进行更新, 覆盖数据库中任何内容. </li>
+</ul>
+<p>解决方案:</p>
+<h5 id="Atomic-Write-原子写"><a href="#Atomic-Write-原子写" class="headerlink" title="Atomic Write 原子写"></a>Atomic Write 原子写</h5><p>大部分数据库都提供原子更新操作, 下面的指令在大多数关系型数据库中是并发安全的:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">UPDATE</span> counters <span class="keyword">SET</span> <span class="keyword">value</span> = <span class="keyword">value</span> + <span class="number">1</span> <span class="keyword">WHERE</span> <span class="keyword">key</span> = <span class="string">'foo'</span>;</span><br></pre></td></tr></table></figure>
+
+<h5 id="Explicit-Locking-显式锁定"><a href="#Explicit-Locking-显式锁定" class="headerlink" title="Explicit Locking 显式锁定"></a>Explicit Locking 显式锁定</h5><p>假如数据库内置的原子操作没有提供必要功能, 我们可以让应用程序显式地锁定对象</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">BEGIN</span> <span class="keyword">TRANSACTION</span>;</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> figures</span><br><span class="line">	<span class="keyword">WHERE</span> <span class="keyword">name</span> = <span class="string">'robot'</span> <span class="keyword">AND</span> game_id = <span class="number">222</span></span><br><span class="line"><span class="keyword">FOR</span> <span class="keyword">UPDATE</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 检查玩家的操作是否有效, 然后更新先前SELECT返回棋子的位置.</span></span><br><span class="line"><span class="keyword">UPDATE</span> figures <span class="keyword">SET</span> <span class="keyword">position</span> = <span class="string">'c4'</span> <span class="keyword">WHERE</span> <span class="keyword">id</span> = <span class="number">1234</span>;</span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+<p><code>FOR UPDATE</code>子句告诉数据库应该对查询返回的行加锁</p>
+<h5 id="自动检测丢失的更新"><a href="#自动检测丢失的更新" class="headerlink" title="自动检测丢失的更新"></a>自动检测丢失的更新</h5><p>原子操作和锁是通过强制进行<strong>读取-修改-写入序列</strong>来防止丢失更新的方法. 另一种方法可以让他们并发执行, 如果事务管理器检测到丢失更新, 则中止事务并强制重试读取-修改-写入序列</p>
+<h5 id="CAS-比较并设置"><a href="#CAS-比较并设置" class="headerlink" title="CAS 比较并设置"></a>CAS 比较并设置</h5><p>在不提供事务的数据库中, 有时会发现一种原子操作：<strong>比较并设置(CAS, Compare And Set)</strong>. 此操作的目的是为了避免丢失更新：只有当前值从上次读取时一直未改变, 才允许更新发生.如果当前值与先前读取的值不匹配, 则更新不起作用, 且必须重试读取-修改-写入序列.</p>
+<p>但是要注意如果数据库允许<code>WHERE</code>子句从旧的快照中读取, 则这种语句无法防止更新丢失. </p>
+<h4 id="Write-skew-and-Phantoms-写入偏差和幻读"><a href="#Write-skew-and-Phantoms-写入偏差和幻读" class="headerlink" title="Write skew and Phantoms 写入偏差和幻读"></a>Write skew and Phantoms 写入偏差和幻读</h4><p>首先, 想象一下这个例子: 你正在为医院写一个医生轮班管理程序.医院通常会同时要求几位医生待命, 但底线是至少有一位医生在待命.医生可以放弃他们的班次(例如, 如果他们自己生病了), 只要至少有一个同事在这一班中继续工作.</p>
+<p>现在想象一下, Alice和Bob是两位值班医生.两人都感到不适, 所以他们都决定请假.不幸的是, 他们恰好在同一时间点击按钮下班.<br><img src="/images/fig7-8.png" alt=""></p>
+<p>在两个事务中, 应用首先检查是否有两个或以上的医生正在值班. 如果是的话它就假定一名医生可以安全地休班. 由于数据库使用快照隔离, 两次检查都返回了2, 所以两个事务都进入了下一个阶段. 两个事务都成功提交了, 现在没有医生值班了. </p>
+<h5 id="写偏差的特征"><a href="#写偏差的特征" class="headerlink" title="写偏差的特征"></a>写偏差的特征</h5><p>这种异常成为<strong>写偏差</strong>. 这两个事务正在更新两个不同多对象, 但是这里显然是一个race condition. 如果两个事务一个一个运行, 那么第二个医生就不应该可以下班. 这种异常只会出现在事务并发进行时.<br>这种问题也可以用添加行锁来解决</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">BEGIN</span> <span class="keyword">TRANSACTION</span>;</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> doctors</span><br><span class="line">  <span class="keyword">WHERE</span> on_call = <span class="literal">TRUE</span> </span><br><span class="line">  <span class="keyword">AND</span> shift_id = <span class="number">1234</span> <span class="keyword">FOR</span> <span class="keyword">UPDATE</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">UPDATE</span> doctors</span><br><span class="line">  <span class="keyword">SET</span> on_call = <span class="literal">FALSE</span></span><br><span class="line">  <span class="keyword">WHERE</span> <span class="keyword">name</span> = <span class="string">'Alice'</span> </span><br><span class="line">  <span class="keyword">AND</span> shift_id = <span class="number">1234</span>;</span><br><span class="line">  </span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+
+<h5 id="导致写偏差的幻读"><a href="#导致写偏差的幻读" class="headerlink" title="导致写偏差的幻读"></a>导致写偏差的幻读</h5><ol>
+<li>一个<code>SELECT</code>查询找出符合条件的行, 并检查是否符合一些要求</li>
+<li>按照第一个查询的结果, 应用代码决定是否继续</li>
+<li>如果应用决定继续操作, 就执行写入(插入, 更新或删除)<br>这里写入的效果改变了2中的条件<br>一个事务中的写入改变另一个事务的搜索查询的结果, 被称为<strong>幻读</strong></li>
+</ol>
+<h5 id="物化冲突"><a href="#物化冲突" class="headerlink" title="物化冲突"></a>物化冲突</h5><p>如果幻读没有对象可以加锁, 可以认为的在数据库中引入一个锁对象</p>
+<p>例如, 在会议室预订的场景中, 可以想象创建一个关于时间槽和房间的表.此表中的每一行对应于特定时间段(例如15分钟)的特定房间.可以提前插入房间和时间的所有可能组合行(例如接下来的六个月).</p>
+<p>这种方法被称为<strong>物化冲突(materializing conflicts)</strong>, 因为它将幻读变为了数据库中一组具体行上的锁冲突. 但是物化冲突很容易出错, 更多时候我们使用<strong>可序列化(Serializable)</strong>的隔离级别来解决这种问题. </p>
+<h3 id="Serializable-可序列化"><a href="#Serializable-可序列化" class="headerlink" title="Serializable 可序列化"></a>Serializable 可序列化</h3><p>可序列化隔离通常被认为是最强的隔离级别. 它保证即使事务可以并行执行, 最终的结果也是一样的, 就好像没有任何并发. 因此数据库保证, 如果事务在单独运行时正常运行, 那么在并发时也可以继续保持正确. 换句话说, 数据库会保证防止所有可能的竞争条件. </p>
+<p>可序列化数据库的三种技术:</p>
+<ul>
+<li>真的串行执行</li>
+<li>两相锁定(2PL, two-phase locking)</li>
+<li>乐观并发控制技术, 如可序列化的快照隔离(serializable snapshot isolation)</li>
+</ul>
+<p>这里只在单节点数据库的背景下讨论这些技术</p>
+<h4 id="真的串行执行"><a href="#真的串行执行" class="headerlink" title="真的串行执行"></a>真的串行执行</h4><p>避免并发的最简单方法就是完全不要并发, 在单个线程上按顺序一次只执行一个事务<br>为什么单线程循环执行事务是可行的? 为什么性能不会受到影响?</p>
+<ul>
+<li>RAM现在很便宜了, 因此我们可以把所有的数据都存在内存里. 当所有的数据都在内存中时, 我们就避免了高昂的IO消耗, 因此事务的执行实际上是很快的</li>
+<li>OLTP事务其实通常很短并且只会进行很少量的读写. 进行大量分析的任务往往是只读的, 可以再串行执行循环外的一致快照上运行</li>
+</ul>
+<p>这种方式用在了VoltDB/H-Store, Redis和Datomic中. 这些用于单线程执行的系统有时可以比支持并发的系统更快, 因为避免了锁的协调开销. 但是为了最大化利用单线程, 需要与传统形式不同的事务</p>
+<h5 id="Encapsulating-transactions-in-stored-procedures-在存储过程中封装事务"><a href="#Encapsulating-transactions-in-stored-procedures-在存储过程中封装事务" class="headerlink" title="Encapsulating transactions in stored procedures 在存储过程中封装事务"></a>Encapsulating transactions in stored procedures 在存储过程中封装事务</h5><p>为了避免等待人类输入以及网络延迟, 单线程串行事务处理的系统不允许交互式的多语句事务. 应用必须提前将整个事务代码作为存储过程提交给数据库. 而由于所需的所有数据都在内存中, 存储过程可以非常快地执行, 不需要等待任何网络或磁盘IO.<br><img src="/images/fig7-9.png" alt=""></p>
+<h5 id="分区"><a href="#分区" class="headerlink" title="分区"></a>分区</h5><p>虽然顺序执行所有事务降低了并发控制的开销, 但数据库的事务吞吐量被限制在了单机单核的速度. 因此对于写入吞吐量较高的应用, 单线程事务处理器会成为严重的瓶颈. 可以通过对数据分区来扩展到多个CPU核心和多个节点. 但是由于跨分区事务有额外的协调开销, 它们比单分区事务慢很多. </p>
+<h5 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h5><ul>
+<li>每个事务必须小而快, 否则会拖慢所有事务的处理</li>
+<li>假如只能把活跃数据集放入内存, 很少访问的数据可能会被移动到磁盘, 在单线程执行中访问这些数据会拖慢系统</li>
+<li>写入吞吐量必须低到能在单个CPU核心上处理</li>
+<li>跨分区事务是可能的, 但是有很大的限制</li>
+</ul>
+<h4 id="两相锁定-2PL-two-phase-locking"><a href="#两相锁定-2PL-two-phase-locking" class="headerlink" title="两相锁定(2PL, two-phase locking)"></a>两相锁定(2PL, two-phase locking)</h4><p>30年来数据库中只有一种广泛使用的序列化算法: <strong>两阶段锁定</strong>. 有时也会被称作<strong>严格两阶段锁定(SS2PL, strict two-phase locking)</strong></p>
+<p>之前看到锁通常用于防止脏写: 如果两个事务同时尝试写入同一个对象, 则锁可以保证第二个写入必须等到第一个写入完成事务(中止或提交), 然后才能继续. </p>
+<p>两阶段锁定类似, 但锁的要求更强. 只要没有写入, 就允许多个事务读取同一个对象, 但对象只要有写入, 就需要<strong>独占访问(exclusive access)</strong>权限:</p>
+<ul>
+<li>如果事务A读取了一个对象, 并且事务B想要写入该对象, 那么B必须等到A提交或中止才能继续</li>
+<li>如果事务A写入了一个对象, 并且事务B想要读取该对象, 则B必须等到A提交或中止才能继续</li>
+</ul>
+<p>在2PL中, 写不仅阻塞其他写, 也阻塞读, 反之亦然. </p>
+<h5 id="实现两相锁定"><a href="#实现两相锁定" class="headerlink" title="实现两相锁定"></a>实现两相锁定</h5><p>2PL用于MySQL(InnoDB)和SQL Server中的可序列化隔离级别, 以及DB2中的可重复读隔离级别</p>
+<p>读和谐的阻塞是通过哟为数据库中每个对象添加锁来实现的. 锁可以处于<strong>共享模式(shared mode)</strong>或<strong>独占模式(exclusive mode)</strong></p>
+<ul>
+<li>若事务要读取对象, 则须先以共享模式获取锁. 允许多个事务同时持有共享锁. 但如果另一个事务已经在对象上持有排它锁, 则这些事务必须等待</li>
+<li>若事务要写入一个对象, 它必须首先以独占模式获取该锁. 没有其他事务可以同时持有锁, 共享模式也不行, 所以该对象上如果存在任何锁, 该事务必须等待</li>
+<li>如果事务先读取再写入对象, 它会把共享锁升级为独占锁, 升级锁的过程和获得排它锁一样</li>
+<li>事务获得锁之后, 必须继续持有锁直到事务结束. 这就是两阶段名字的来源, 第一阶段是事务正在执行时获取锁, 第二阶段是在事务结束时释放所有锁</li>
+</ul>
+<p>数据库会自动检测死锁并中止其中一个</p>
+<h5 id="两相锁定的性能"><a href="#两相锁定的性能" class="headerlink" title="两相锁定的性能"></a>两相锁定的性能</h5><p>两相锁定的巨大缺点就是性能问题. 一部分是因为获取和释放锁的开销, 但是更重要的是并发性的降低. </p>
+<h5 id="Predicate-Lock-谓词锁"><a href="#Predicate-Lock-谓词锁" class="headerlink" title="Predicate Lock 谓词锁"></a>Predicate Lock 谓词锁</h5><p>我们希望防止幻读, 从概念上讲我们需要一个<strong>谓词锁(predicate lock)</strong>. 它类似前面描述的共享/拍他锁但是不属于特定的对象, 它属于所有符合搜索条件的对象, 如:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> bookings</span><br><span class="line"><span class="keyword">WHERE</span> room_id = <span class="number">123</span> <span class="keyword">AND</span></span><br><span class="line">      end_time &gt; <span class="string">'2018-01-01 12:00'</span> <span class="keyword">AND</span> </span><br><span class="line">      start_time &lt; <span class="string">'2018-01-01 13:00'</span>;</span><br></pre></td></tr></table></figure>
+<p>谓词锁限制访问:</p>
+<ul>
+<li>如果事务A想要读取匹配某些条件的对象, 就像上面的<code>SELECT</code>查询中那样, 它必须获取查询条件上的<strong>共享谓词锁(shared-mode predicate lock)</strong>. 如果另一个事务B持有任何满足这一查询条件对象的排它锁, 那么A必须等待B释放锁之后才能进行查询</li>
+<li>如果事务A想要写入, 则必须首先检查旧值或新值是否与任何现有的谓词锁匹配. 如果事务B持有匹配的谓词锁, 那么A必须等待B结束</li>
+</ul>
+<p>谓词锁适用于数据库中上不存在但将来可能添加的对象(幻象). 如果两阶段锁定包含谓词锁, 则数据库将阻止所有形式的写入偏差和其他race condition, 因此隔离实现了可串行化.</p>
+<h5 id="索引范围锁"><a href="#索引范围锁" class="headerlink" title="索引范围锁"></a>索引范围锁</h5><p>谓词锁的性能不太好: 如果活跃事务持有很多锁, 检查匹配的锁非常耗时. 因此大多数使用2PL的数据库实际上实现了索引范围锁(也成为间隙锁 next-key locking), 这是简化的谓词锁<br>我们可以安全地使谓词匹配到一个更大的集合.</p>
+<p>比如在一个客房预订数据库中, 可能会在<code>room_id</code>列上有一个索引, 并且/或者在<code>start_time</code> 和 <code>end_time</code>上有索引(否则前面的查询在大型数据库上的速度会非常慢)：</p>
+<ul>
+<li>假设索引位于<code>room_id</code>上, 并且数据库使用此索引查找123号房间的现有预订.现在数据库可以简单地将共享锁附加到这个索引项上, 指示事务已搜索123号房间用于预订.</li>
+<li>或者, 如果数据库使用基于时间的索引来查找现有预订, 那么它可以将共享锁附加到该索引中的一系列值, 指示事务已经将12:00~13:00时间段标记为用于预定.</li>
+</ul>
+<p>这种方法可以有效防止幻读和写入偏差. 索引范围锁不如谓词锁精确, 但是由于开销较低, 是一个很好的折中方法. </p>
+<h3 id="Serializable-Snapshot-Isolation-序列化快照隔离"><a href="#Serializable-Snapshot-Isolation-序列化快照隔离" class="headerlink" title="Serializable Snapshot Isolation 序列化快照隔离"></a>Serializable Snapshot Isolation 序列化快照隔离</h3><h4 id="悲观与乐观的并发控制"><a href="#悲观与乐观的并发控制" class="headerlink" title="悲观与乐观的并发控制"></a>悲观与乐观的并发控制</h4><p>两阶段锁是一种悲观并发控制机制(pessimistic concurrency control): 它基于这样的原则- 如果有事情可能出错, 最好等到安全之后再做任何事情<br>从某种意义上说串行执行极度悲观, 在事务持续期间, 每个事务实际上对整个数据库都具有排它锁. 作为补偿, 我们让每笔事务都执行的非常快, 所以只需要在短时间内持有锁. </p>
+<p>相比之下, 序列化快照隔离是一种乐观并发控制机制(optimistic concurrency control). 在这种情况下, 乐观意味着, 如果存在潜在的危险也不足之处事务, 而是继续执行事务. 当一个事务想要提交时, 数据库检查是否发生了什么不好的事情, 如果是的话, 事务被中止, 并且重试. 只有可序列化的事务才被允许提交. </p>
+<p>乐观并发控制在系统吞吐量很大的时候或存在争用的时候表现不佳, 因为会导致大量中止和重试. 但是如果有足够的容量且事务的争用不太高, 乐观并发控制效果比悲观好. </p>
+<p>SSI基于快照隔离, 也就是说事务中的所有读取都来自于数据库的一致性快照. </p>
+<h5 id="基于过时前提的决策"><a href="#基于过时前提的决策" class="headerlink" title="基于过时前提的决策"></a>基于过时前提的决策</h5><p>先前讨论了快照隔离中的写入偏差时, 我们观察到一个循环模式：事务从数据库读取一些数据, 检查查询的结果, 并根据它看到的结果决定采取一些操作(写入数据库). 但是, 在快照隔离的情况下, 原始查询的结果在事务提交时可能不再是最新的, 因为数据可能在同一时间被修改. </p>
+<p>换句话说, 事务基于一个<strong>前提(premise)</strong> 采取行动(事务开始时候的事实, 例如：”目前有两名医生正在值班”). 之后当事务要提交时, 原始数据可能已经改变——前提可能不再成立. </p>
+<p>当应用程序进行查询时(例如, “当前有多少医生正在值班?”), 数据库不知道应用逻辑如何使用该查询结果. 在这种情况下为了安全, 数据库需要假设任何对该结果集的变更都可能会使该事务中的写入变得无效.  换而言之, 事务中的查询与写入可能存在因果依赖. 为了提供可序列化的隔离级别, 如果事务在过时的前提下执行操作, 数据库必须能检测到这种情况, 并中止事务. </p>
+<p>数据库如何知道查询结果是否可能已经改变?有两种情况需要考虑：</p>
+<ul>
+<li>检测对旧MVCC对象版本的读取(读之前存在未提交的写入)</li>
+<li>检测影响先前读取的写入(读之后发生写入)</li>
+</ul>
+<h5 id="检测旧MVCC读取"><a href="#检测旧MVCC读取" class="headerlink" title="检测旧MVCC读取"></a>检测旧MVCC读取</h5><p>检测事务何时从MVCC快照读取过时的值<br><img src="/images/fig7-10.png" alt=""><br>为了防止这种异常,数据库需要跟踪一个事务由于MVCC可见性规则而忽略另一个事务的写入.当事务想要提交时,数据库检查是否有任何被忽略的写入现在已经被提交.如果是这样,事务必须中止.</p>
+<p>为什么要等到提交?当检测到陈旧的读取时,为什么不立即中止事务43? 因为如果事务43 是只读事务,则不需要中止,因为没有写入偏差的风险.当事务43 进行读取时,数据库还不知道事务是否要稍后执行写操作.此外,事务42 可能在事务43 被提交的时候中止或者可能仍然未被提交,因此读取可能终究不是陈旧的.通过避免不必要的中止,SSI 保留快照隔离对从一致快照中长时间运行的读取的支持.</p>
+<h5 id="检测影响之前读取的写入"><a href="#检测影响之前读取的写入" class="headerlink" title="检测影响之前读取的写入"></a>检测影响之前读取的写入</h5><p>第二种要考虑的是另一个事务在读取数据之后修改事务.<br><img src="/images/fig7-11.png" alt=""></p>
+<p>当事务写入数据库时, 它必须在索引中查找最近曾读取受影响数据的其他事务.这个过程类似于在受影响的键范围上获取写锁, 但锁并不会阻塞事务指导其他读事务完成, 而是像警戒线一样只是简单通知其他事务: 你们读过的数据可能不是最新的了.</p>
+<p>事务43 通知事务42 其先前读已过时.反之亦然.事务42首先提交并成功.尽管事务43 的写影响了42 .但因为事务43 尚未提交.所以写入尚未生效.然而当事务43 想要提交时.来自事务42 的冲突写入已经被提交.所以事务43 必须中止.</p>
+<h5 id="可序列化的快照隔离的性能"><a href="#可序列化的快照隔离的性能" class="headerlink" title="可序列化的快照隔离的性能"></a>可序列化的快照隔离的性能</h5><p>与两阶段锁定相比.可序列化快照隔离的最大优点是一个事务不需要阻塞等待另一个事务所持有的锁.就像在快照隔离下一样.写不会阻塞读.反之亦然.这种设计原则使得查询延迟更可预测.变量更少.特别是.只读查询可以运行在一致的快照上.而不需要任何锁定.这对于读取繁重的工作负载非常有吸引力.</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>事务是一个抽象层, 允许应用程序假装某些并发问题和某些类型的硬件和软件故障不存在.各式各样的错误被简化为一种简单情况：<strong>事务中止（transaction abort）</strong>, 而应用需要的仅仅是重试.</p>
+<p><strong><em>脏读</em></strong></p>
+<p>​    一个客户端读取到另一个客户端尚未提交的写入.<strong>读已提交</strong>或更强的隔离级别可以防止脏读.</p>
+<p><strong><em>脏写</em></strong></p>
+<p>​    一个客户端覆盖写入了另一个客户端尚未提交的写入.几乎所有的事务实现都可以防止脏写.</p>
+<p><strong><em>读取偏差（不可重复读）</em></strong></p>
+<p>​    在同一个事务中, 客户端在不同的时间点会看见数据库的不同状态.<strong>快照隔离</strong>经常用于解决这个问题, 它允许事务从一个特定时间点的一致性快照中读取数据.快照隔离通常使用<strong>多版本并发控制（MVCC）</strong> 来实现.</p>
+<p><strong><em>更新丢失</em></strong></p>
+<p>​    两个客户端同时执行<strong>读取-修改-写入序列</strong>.其中一个写操作, 在没有合并另一个写入变更情况下, 直接覆盖了另一个写操作的结果.所以导致数据丢失.快照隔离的一些实现可以自动防止这种异常, 而另一些实现则需要手动锁定（<code>SELECT FOR UPDATE</code>）.</p>
+<p><strong><em>写偏差</em></strong></p>
+<p>​    一个事务读取一些东西, 根据它所看到的值作出决定, 并将该决定写入数据库.但是, 写入时, 该决定的前提不再是真实的.只有可序列化的隔离才能防止这种异常.</p>
+<p><strong><em>幻读</em></strong></p>
+<p>​    事务读取符合某些搜索条件的对象.另一个客户端进行写入, 影响搜索结果.快照隔离可以防止直接的幻像读取, 但是写入偏差上下文中的幻读需要特殊处理, 例如索引范围锁定.</p>
+<p>​弱隔离级别可以防止其中一些异常情况, 此外让开发人员手动处理剩余那些（例如, 使用显式锁定）.只有可序列化的隔离才能防范所有这些问题.我们讨论了实现可序列化事务的三种不同方法：</p>
+<p><strong><em>字面意义上的串行执行</em></strong></p>
+<p>​    如果每个事务的执行速度非常快, 并且事务吞吐量足够低, 足以在单个CPU核上处理, 这是一个简单而有效的选择.</p>
+<p><strong><em>两阶段锁定</em></strong></p>
+<p>​    数十年来, 两阶段锁定一直是实现可序列化的标准方式, 但是许多应用出于性能问题的考虑避免使用它.</p>
+<p><strong><em>可串行化快照隔离（SSI）</em></strong></p>
+<p>​    一个相当新的算法, 避免了先前方法的大部分缺点.它使用乐观的方法, 允许事务执行而无需阻塞.当一个事务想要提交时, 它会进行检查, 如果执行不可序列化, 事务就会被中止.</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/DDIA/" rel="tag"># DDIA</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+              <a href="/tags/%E7%B3%BB%E7%BB%9F/" rel="tag"># 系统</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/12/graph-pattern-2-single-source-shortest-path/" rel="prev" title="图问题(2)-单源最短路径(Dijkstra's/Bellman Ford)">
+      <i class="fa fa-chevron-left"></i> 图问题(2)-单源最短路径(Dijkstra's/Bellman Ford)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/17/binary-segment-tree/" rel="next" title="线段树及其应用">
+      线段树及其应用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Shuo H</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Shuo H</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
