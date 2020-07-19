@@ -30,7 +30,7 @@
 <meta property="og:image" content="http://yoursite.com/images/binary-segment-tree.png">
 <meta property="og:image" content="http://yoursite.com/images/segtree_example_4.png">
 <meta property="article:published_time" content="2020-07-17T23:06:30.000Z">
-<meta property="article:modified_time" content="2020-07-18T01:02:46.100Z">
+<meta property="article:modified_time" content="2020-07-19T06:16:21.844Z">
 <meta property="article:author" content="Shuo H">
 <meta property="article:tag" content="算法">
 <meta property="article:tag" content="Leetcode">
@@ -194,10 +194,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2020-07-17 16:06:30 / Modified: 18:02:46" itemprop="dateCreated datePublished" datetime="2020-07-17T16:06:30-07:00">2020-07-17</time>
+              <time title="Created: 2020-07-17 16:06:30" itemprop="dateCreated datePublished" datetime="2020-07-17T16:06:30-07:00">2020-07-17</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-07-18 23:16:21" itemprop="dateModified" datetime="2020-07-18T23:16:21-07:00">2020-07-18</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -232,7 +238,7 @@
 <li>返回新的<code>SegmentTreeNode</code>, <code>sum</code>为左节点<code>sum</code>加右节点<code>sum</code>. </li>
 </ol>
 <p>时间复杂度: <code>BuildTree T(n) = 2 * T(n / 2) = O(n)</code></p>
-<h3 id="更新树"><a href="#更新树" class="headerlink" title="更新树"></a>更新树</h3><p>线段树的一大特点是可以动态更新树中的元素, 但是更新仅限于更新值而不能新插入元素或删减元素(改变原数组长度)</p>
+<h3 id="更新树"><a href="#更新树" class="headerlink" title="更新树"></a>更新树</h3><p>线段树的一大特点是可以动态更新树中的元素</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">updateTree</span><span class="params">(root, index, val)</span>:</span></span><br><span class="line">    <span class="keyword">if</span> root.start == root.end == index;</span><br><span class="line">        root.sum = val</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    mid = (start + end) &gt;&gt; <span class="number">1</span></span><br><span class="line">    <span class="keyword">if</span> index &lt;= mid:</span><br><span class="line">        updateTree(root.left, index, val)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        updateTree(root.right, index, val)</span><br><span class="line">    root.sum = root.left.sum + root.right.sum</span><br></pre></td></tr></table></figure>
 <ol>
 <li>如果当前节点的<code>start</code>和<code>end</code>都与需要更新的节点下标<code>index</code>相等的话, 证明当前节点即为需要更新的叶子节点. 直接更新sum返回.</li>
@@ -301,7 +307,10 @@
     <a href="/2020/07/16/transaction/" rel="prev" title="DDIA读书笔记:事务">
       <i class="fa fa-chevron-left"></i> DDIA读书笔记:事务
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/18/contest-198/" rel="next" title="Leetcode Contest 198">
+      Leetcode Contest 198 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -373,7 +382,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
