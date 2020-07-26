@@ -20,15 +20,24 @@
     var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="S.H&#39;s blog">
-<meta property="og:url" content="http://yoursite.com/tags/DP/index.html">
+  <meta name="description" content="原文: Design Data Intensive Applications部分中文翻译来自: 设计数据密集型应用 - 中文翻译 故障与部分失效在分布式系统中,  尽管系统的其他部分工作正常,  但系统的某些魔符可能会议某种不可预知的方式被破坏,  这叫做部分失效(partial failure). 部分失效是不确定性的(nondeterministic).  不可靠的网络互联网和数据中心中的大多">
+<meta property="og:type" content="website">
+<meta property="og:title" content="DDIA读书笔记:分布式系统的麻烦">
+<meta property="og:url" content="http://yoursite.com/wip/the-trouble-with-distributed-systems.html">
 <meta property="og:site_name" content="S.H&#39;s blog">
+<meta property="og:description" content="原文: Design Data Intensive Applications部分中文翻译来自: 设计数据密集型应用 - 中文翻译 故障与部分失效在分布式系统中,  尽管系统的其他部分工作正常,  但系统的某些魔符可能会议某种不可预知的方式被破坏,  这叫做部分失效(partial failure). 部分失效是不确定性的(nondeterministic).  不可靠的网络互联网和数据中心中的大多">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/images/15956146446910.jpg">
+<meta property="article:published_time" content="2020-07-24T04:24:58.000Z">
+<meta property="article:modified_time" content="2020-07-24T22:56:36.400Z">
 <meta property="article:author" content="Shuo H">
+<meta property="article:tag" content="DDIA">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="系统">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/images/15956146446910.jpg">
 
-<link rel="canonical" href="http://yoursite.com/tags/DP/">
+<link rel="canonical" href="http://yoursite.com/wip/the-trouble-with-distributed-systems">
 
 
 <script id="page-configurations">
@@ -41,7 +50,8 @@
   };
 </script>
 
-  <title>Tag: DP | S.H's blog</title>
+  <title>DDIA读书笔记:分布式系统的麻烦 | S.H's blog
+</title>
   
 
 
@@ -153,54 +163,68 @@
       <div class="main-inner">
         <div class="content-wrap">
           
+  
+  
 
-          <div class="content tag">
+          <div class="content page posts-expand">
             
 
+    
+    
+    
+    <div class="post-block" lang="en">
+      <header class="post-header">
+
+<h1 class="post-title" itemprop="name headline">DDIA读书笔记:分布式系统的麻烦
+</h1>
+
+<div class="post-meta">
   
-  
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h2 class="collection-header">DP
-          <small>Tag</small>
-        </h2>
-      </div>
+
+</div>
+
+</header>
 
       
-    <div class="collection-year">
-      <span class="collection-header">2020</span>
-    </div>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-07-06T21:53:08-07:00"
-              content="2020-07-06">
-          07-06
-        </time>
+      
+      
+      <div class="post-body">
+          <p>原文: <a href="https://www.oreilly.com/library/view/designing-data-intensive-applications/9781491903063/" target="_blank" rel="noopener">Design Data Intensive Applications</a><br>部分中文翻译来自: <a href="https://github.com/Vonng/ddia" target="_blank" rel="noopener">设计数据密集型应用 - 中文翻译</a></p>
+<h2 id="故障与部分失效"><a href="#故障与部分失效" class="headerlink" title="故障与部分失效"></a>故障与部分失效</h2><p>在分布式系统中,  尽管系统的其他部分工作正常,  但系统的某些魔符可能会议某种不可预知的方式被破坏,  这叫做<strong>部分失效(partial failure)</strong>. 部分失效是<strong>不确定性的(nondeterministic)</strong>. </p>
+<h3 id="不可靠的网络"><a href="#不可靠的网络" class="headerlink" title="不可靠的网络"></a>不可靠的网络</h3><p>互联网和数据中心中的大多数内部网络都是<strong>异步分组网络(asynchronous packet networks)</strong>. 在这种网络中,  一个节点向另一个节点发送一个消息,  网络不能保证它上面时候到达或者是否到达</p>
+<ul>
+<li>请求可能丢失</li>
+<li>请求可能排队,  稍后交付</li>
+<li>远程节点失效</li>
+<li>远程节点暂时停止了响应</li>
+<li>远程节点可能处理了请求,  但是网络响应丢失</li>
+<li>远程节点可能已经处理了请求,  但是响应被延迟,  稍后交付<br><img src="/images/15956146446910.jpg" alt=""><br>我们无法区分:<br>(a) 请求丢失<br>(b) 远程节点失效<br>(c) 响应丢失<br>处理这个问题的通常方式是使用<strong>超时(Timeout)</strong>: 在一段时间之后放弃等待, 并且认为响应不会到达. </li>
+</ul>
+<h4 id="超时与无穷的延迟"><a href="#超时与无穷的延迟" class="headerlink" title="超时与无穷的延迟"></a>超时与无穷的延迟</h4><p>长时间的超时意味着长时间等待, 知道一个节点被宣告死亡. 短暂的超时可以更快地检测到故障, 但是十几杀那个它只是经历了暂时的减速(由于节点或网络上的负载峰值)而导致错误地宣布节点失效的风险更高.<br>当一个节点被宣告死亡时, 其职责需要被转移到其他节点, 这回给其他节点和网络带来额外的负担. 如果系统以及处在高负荷状态, 则过早宣告节点死亡会使物体更加严重. 这种情况可能会导致<strong>级联失效(cascading failure)</strong><br>在一个虚构的系统中, 网络保证数据包的最大延迟为<code>d</code>. 此外假设一个非故障节点总是在一段时间内处理一个请求用时<code>r</code>, 那么我们可以保证每个成功的请求都应该在<code>2d+r</code>的时长内收到响应, 这是一个合理的超时设置. </p>
+<h5 id="网络拥塞"><a href="#网络拥塞" class="headerlink" title="网络拥塞"></a>网络拥塞</h5><ul>
+<li>多个节点同时尝试将数据包发送到同一目的地, 网络交换机需要将数据包排队并逐个送入目标网络链路. 在繁忙的网络链路上, 数据包可能需要等待一段时间才能获得一个插槽(网络连接). 如果常茹的数据太多, 交换机队列被填满, 数据包会被丢弃, 因此需要重新发送数据包- 即使网络运行情况良好</li>
+<li>数据包到达目标机器时, 如果所有 cpu 内核都处在繁忙状态, 则来自网络的传入请求将被操作系统排入队列</li>
+<li>在虚拟化环境中, 正在运行的操作系统经常暂停几十毫秒, 而另一个虚拟机使用 cpu 内核</li>
+<li>TCP 执行<strong>流量控制(flow control)</strong>, 节点限制自己的发送速率以避免网络链路或者接收节点过载</li>
+</ul>
+<h3 id="不可靠的时钟"><a href="#不可靠的时钟" class="headerlink" title="不可靠的时钟"></a>不可靠的时钟</h3><h4 id="单调钟与时钟"><a href="#单调钟与时钟" class="headerlink" title="单调钟与时钟"></a>单调钟与时钟</h4><p>现代计算机至少有两种不同的时钟: 时钟和单调钟. 尽管他们都衡量时间, 但区分这两者很重要</p>
+<ul>
+<li>时钟<br>时钟是直观了解时钟的依据: 它根据某个日历(挂钟时间)返回当前的日期和时间. 时钟通常与 NTP 同步, 这意味着来自一台机器的时间戳在理想情况下与另一台机器上的相同. </li>
+<li>单调钟</li>
+<li>单调钟适用于测量持续时间(时间间隔), 例如超时或服务的响应时间. </li>
+</ul>
+<h4 id="时钟同步与准确性"><a href="#时钟同步与准确性" class="headerlink" title="时钟同步与准确性"></a>时钟同步与准确性</h4><p>计算机中的石英钟不够精确: 它会<strong>漂移(drifting)</strong>, 导致运行速度快于或慢于预期</p>
+<h4 id="依赖同步时钟"><a href="#依赖同步时钟" class="headerlink" title="依赖同步时钟"></a>依赖同步时钟</h4>
       </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2020/07/06/dp-pattern-1-LIS/" itemprop="url">
-            <span itemprop="name">动态规划问题(1)-最长上升子序列及其变种</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
+      
+      
+      
     </div>
-  </div>
-  
-  
-  
+    
 
-  
-
+    
+    
+    
 
 
           </div>
